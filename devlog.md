@@ -10,3 +10,20 @@ My overall plan is to do this in 5 sessions. There will be a logger, an encrypti
 
 my Plan for this session is to set up the repo and gitignore, write the logger, and test it alone by piping text into it. 
 The Goal here is a log file with correctly formatted timestamped lines. 
+
+The code for this session i am doing is logger.py
+- The logger is a separate process with its own file handle, and it only knows what arrives through stdin. It never talks back, so it needs only a one-way pipe.
+
+- It takes the log file name from argv, reads stdin line by line, and writes YYYY-MM-DD HH:MM ACTION MESSAGE lines until it sees QUIT.
+
+- I am putting an edge case, len(sys.argv) != 2 which will throw an error if the arguments are less than the expected count
+
+- The action is the first run of non-whitespace and the rest is the message. Splitting using split(None, 1) keeps the message intact, including its internal spacing.
+
+- i am doing f.flush() after every write because if the driver or logger dies mid-run, lines already logged still reach the disk. It also lets me cat the log while the driver is running to see what is actually happening.
+
+- I was confused on how to open the file but opening in append mode ("a") seemed like the right choice. Running the driver twice doesn’t erase the previous run’s log and that seemed safer than overwriting.
+
+- I did a Uuage check on argv the spec because it says exactly one command line argument, so I fail clearly if it’s missing.
+
+- QUIT is not logged because it’s a control signal for the logger, not a log message. The driver logs its own EXIT line first.
