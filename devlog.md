@@ -1,5 +1,5 @@
 # 10-13-2026 11:50am
-
+Session 1:
 Start Entry:
 This is my first entry for the project. I have the basic understanding of the how the project works. The system is basically three separate programs, a logger, an encryption program, and a driver. I only run the driver. It launches the other two as child processes and talks to them through pipes. The logger writes lines like YYYY-MM-DD HH:MM ACTION MESSAGE to a file on the command line, and then stops when it reads QUIT. The encryption program reads PASS, ENCRYPT, DECRYPT and QUIT commands from stdin, remembers the current passkey, and prints RESULT or ERROR lines using a Vigenère cipher. The driver is the interactive part because it has a menu, a history of strings, input validation, and it logs every command and result but never logs a password.
 
