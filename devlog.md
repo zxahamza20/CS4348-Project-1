@@ -12,7 +12,7 @@ My overall plan is to do this in 5 sessions. There will be a logger, an encrypti
 My Plan for this session is to set up the repo and gitignore, write the logger, and test it alone by piping text into it. 
 The Goal here is a log file with correctly formatted timestamped lines. 
 
-During Coding:
+Coding session starts:
 The code for this session i am doing is logger.py
 - The logger is a separate process with its own file handle, and it only knows what arrives through stdin. It never talks back, so it needs only a one-way pipe.
 
@@ -30,7 +30,7 @@ The code for this session i am doing is logger.py
 
 - QUIT is not logged because it’s a control signal for the logger, not a log message. The driver logs its own EXIT line first.
 
-# 10-13-2026 12:55am
+# 10-13-2026 12:55pm
 Ending entry:
 The logger works. It reads lines from stdin, splits off the first word as the action, and writes the timestamped line, stopping on QUIT. I tested it with printf piped into it and the file had the right format. I flushed the file after every write so lines show up immediately, which matters because the driver may crash. This file itself was fairly easy, so I did not encounter any problems. I remembered the flushing concept from UNIX so prevented the unwanted logging problem beforehand. My first version left a trailing space when a message was empty, so I added rstrip.
 
@@ -49,3 +49,31 @@ Input validation: I’ll use isalpha() and also isascii(), because Python’s is
 
 Testing plan: I will use printf to send commands, check the spec example, and check that decrypting an encrypted string gives the original.
 
+Coding session starts:
+The code I am doing for this sesison is in a file encrypt.py
+- It reads commands from stdin, keeps the passkey in a global, and replies with RESULT or ERROR lines.
+
+- I made key = None a global state because the spec says the encryption program remembers the key between commands. None lets me distinguish “never set” and produce the “Password not set” error.
+
+- .upper() on the argument seems fair because the cipher is case insensitive. Normalizing here means the backend works even if the driver forgets.
+
+- I am planning on using one vig() function with a sign parameter. Encrypt adds the key shift and decrypt subtracts it. Using one function avoids two near-identical copies that could drift apart.
+
+- I dont really know how this will work in code. I was thinking somehing like:
+out.append(chr((ord(ch) - 65 + sign * shift) % 26 + 65))
+  - This line performs the mathematical core of the Vigenère cipher: it takes an uppercase ASCII letter ch, shifts it forward (encryption) or backward (decryption) by shift positions within the 26-letter alphabet, and appends the transformed character to the output list out.
+
+- Key index advances per character (k) so the key repeats across the plaintext. Every character is a letter because I validate first, so I don’t need to worry about skipping spaces.
+
+- valid() using isascii() and isalpha() because python’s isalpha() accepts accented letters like “é”, which would break the ord(ch) - 65 math. Requiring ASCII fixes that.
+
+- PASS replies a bare RESULT because the spec’s example shows Output: RESULT for PASS.
+
+- Unknown command returns ERROR instead of crashing because a backend should never die because of malformed input.
+
+My first test appeared to hang. I realized I was printing without flushing, and since stdout was a pipe, Python buffered it. This is exactly the problem I expected in session 1, and now I understand why the driver will need the same care.
+
+- I am using a reply() helper that prints and flushes. The driver blocks on readline(), waiting for exactly one reply per command. When stdout is a pipe, Python buffers output instead of sending it, so without a flush the driver would hang. The helper means I can’t forget it.
+
+To test this file raw: 
+printf 'ENCRYPT HELLO\nPASS HELLO\nENCRYPT HELLO\nDECRYPT OIWWC\nQUIT\n' | python3 encrypt.py
