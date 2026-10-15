@@ -35,3 +35,17 @@ Ending entry:
 The logger works. It reads lines from stdin, splits off the first word as the action, and writes the timestamped line, stopping on QUIT. I tested it with printf piped into it and the file had the right format. I flushed the file after every write so lines show up immediately, which matters because the driver may crash. This file itself was fairly easy, so I did not encounter any problems. I remembered the flushing concept from UNIX so prevented the unwanted logging problem beforehand. My first version left a trailing space when a message was empty, so I added rstrip.
 
 Next session: I am planning on implementing the encryption program. I want to double check the Vigenère wraparound using the HELLO/HELLO example in the spec, which should give OIWWC. this part should hopefully also be straightforward. 
+
+# 10-15-2026 1:36pm
+Session 2:
+Start Entry:
+Thoughts since last session: The encryption program follows the same structure as the logger, as in it reads lines until QUIT, with two differences. First, it has to write a reply to stdout for every command, and the driver will block on readline() waiting for exactly one reply line. If I ever skip a reply or forget to flush it, the driver hangs. Second, it has to remember state, because the passkey must persist across commands. Since it’s a long-running process, a global variable that starts as None works. A None key is how I will detect that no password has been set.
+
+Plan for this session: write encrypt.py with PASS, ENCRYPT, DECRYPT, QUIT, plus ERROR replies for an unset key, non-letter input and unknown commands.
+
+My Vigenère plan: convert each letter to 0 through 25 with ord(ch), add the matching key letter’s value, take mod 26, and convert back. For decryption I subtract instead of add. The key repeats, so the key position is the character index mod the key length. I’ll use one function with a sign parameter instead of two copies so the two directions can’t drift apart. Python’s modulo returns a non-negative number for negatives, so the decrypt wraparound should work without special cases.
+
+Input validation: I’ll use isalpha() and also isascii(), because Python’s isalpha() accepts letters like “é”, and that would break the 0 to 25 math.
+
+Testing plan: I will use printf to send commands, check the spec example, and check that decrypting an encrypted string gives the original.
+
