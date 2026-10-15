@@ -77,3 +77,15 @@ My first test appeared to hang. I realized I was printing without flushing, and 
 
 To test this file raw: 
 printf 'ENCRYPT HELLO\nPASS HELLO\nENCRYPT HELLO\nDECRYPT OIWWC\nQUIT\n' | python3 encrypt.py
+
+# 10-15-2026 3:17pm
+End Entry:
+The encryption program works. Running printf 'ENCRYPT HELLO\nPASS HELLO\nENCRYPT HELLO\nDECRYPT OIWWC\nQUIT\n' | python3 encrypt.py printed ERROR Password not set, RESULT, RESULT OIWWC and RESULT HELLO. it verified that all the cases in the code worked fine in the terminal. 
+
+I made the passkey live in a global variable because the process needs to remember it. The reply() helper flushes every response because a buffered reply would deadlock the driver. I put validation in the encryptor even though the driver will validate too, because a backend should not trust its caller A backend service should never trust its caller because relying on the client to sanitize input breaks the security boundary of an isolated process or service. 
+
+What this shows about pipes and processes is that the key exists only inside this process’s memory. The driver can never read it directly. It can only send a command and read the reply, which is why a clear line-based protocol matters.
+
+The only proble i encountered this session was that I was priinting without flushing so the program kept getting hanged.I made a replay helper function which replied and then flusherd to remedy this issue.
+
+Next session, I will build the driver skeleton, which is the first time all three processes will run together. I will will only implement the quit functionality for now because I more time to figure out how to tie all of this together in a single main entry point. 
