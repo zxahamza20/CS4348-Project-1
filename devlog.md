@@ -160,3 +160,44 @@ For results into history, the encryptor replies RESULT OIWWC, and I strip the RE
 
 
 My plan for this session is to write choose() and show_history(), add the history command, then password, then encrypt, testing each by hand before moving on. I’m deliberately leaving decrypt for the next session so I can see whether encrypt and decrypt end up being nearly identical.
+
+Coding session starts:
+The code I am doing for this session is the history, choose(),password, and encrypt part of code for the driver.py file. These add the history list, a shared function for getting a string from the user, and the history, password and encrypt commands.
+
+- I used history as a module-level list because the spec says history lasts only for the current run, so memory is enough and No file is needed.
+
+- I have one choose() function because again, the spec describes the same “history or new string” flow for password, encrypt and decrypt. Writing it once keeps validation and the history menu consistent, and means a bug only has to be fixed in one place.
+
+- I have a store flag because passwords must never be saved in history, but encrypt and decrypt inputs must, so one parameter covers both these cases.
+
+- Option 0 leaves the history menu. The spec requires a way out of the history to enter a new string. Valid choices start at 1, so 0 will not collide with a real one.
+
+_ I decided skipping the “use history?” question when it’s empty because it would be pointless and confusing.
+
+- I need both isascii() plus isalpha()\ because isalpha() alone accepts letters like “é”, which would break the backend’s ord(ch) - 65 math. This is why I validate more strictly than the obvious check.
+
+Another seemingly trivial decision but a big error avoider decision I made was to validate before storing. Invalid input like Hello World! is rejected before it can reach the history.
+
+- The calling command logs an error and goes back to the menu. This is simpler than looping forever and it also satisfies the spec’s error checking requirement.
+
+- Password handling is an important securty issue I am taking care of. The driver logs only “Password set”, never the value, and it also isn’t added to history.
+
+- Because results are saved to be reused as input I am puttinh them in the history. I strip "RESULT " so only the text is stored.
+
+- PASS replies a bare RESULT while ENCRYPT replies RESULT text. A prefix check handles both, and anything else is logged as an error.
+
+- I decided on Logging the command, the input and the result separately. This makes a readable audit trail.
+
+- Validation in both the driver and the encryptor means the driver gives the user fast feedback and a clean log. The encryptor still checks, because a backend shouldn’t trust its caller.
+
+I wanted to see whether encrypt and decrypt would turn out identical before writing a second copy so I am deferring decrypt to the last session: 
+
+The concepts I was conciously aware of here are that the driver is a controller that translates user actions into the pipe protocol. It owns user-facing state, history. The encryptor owns only the passkey, and the logger owns only the file.
+
+I tested choose() first with only the history command so I could check the menu before involving the encryptor.
+
+Some tradeoffs of my previous code were that I originally appended the string to history before validating, so a bad string like Hello World! landed in the history. I moved the check to happen first.
+
+I stored the entire reply RESULT OIWWC in history instead of just the text, so choosing it as input failed validation. I strip the prefix now.
+
+Also, after choosing from history, I noticed it wasn’t re-added to history. I decided that’s right, because it’s already in there.
