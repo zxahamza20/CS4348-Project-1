@@ -201,3 +201,13 @@ Some tradeoffs of my previous code were that I originally appended the string to
 I stored the entire reply RESULT OIWWC in history instead of just the text, so choosing it as input failed validation. I strip the prefix now.
 
 Also, after choosing from history, I noticed it wasn’t re-added to history. I decided that’s right, because it’s already in there.
+
+# 10-16-2026 4:48pm
+End entry:
+Current status of the project is that password, encrypt and history work. After a test run, password HELLO gives RESULT, encrypt HELLO gives RESULT OIWWC, history shows HELLO and OIWWC, and encrypting Hello World! gives an error and adds nothing to the history. The log contains the command, input and result lines, and no password.
+
+I basically made one shared choose() which keeps validation and the history menu consistent. The store flag keeps passwords out of history. Validating in the driver as well as in the encryptor gives quick feedback to the user and a clean log, while the backend still protects itself.
+
+I think I understand better now that the driver is a controller. It owns user-facing state like the history, the encryptor owns only the passkey, and the logger owns only the file. Each process has one job, and the pipes carry the messages between them.
+
+For the next session: I only have one more thing to add, decrypt. The encrypt branch looks like it can be shared with decrypt almost unchanged. After that, final testing, and the reademe, which will be the end. 
