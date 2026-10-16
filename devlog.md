@@ -147,4 +147,16 @@ Using Popen with PIPE is how I satisfy the spec’s use of the subprocess module
 
 I understand better now that a pipe is one-way, so a two-way conversation needs two pipes. Messages have to pair up one request to one reply. If the driver waits for a reply the child never sends, both sides wait forever. and potentially enter a deadlock. 
 
-In the next session, I will build and add the history, string validation, and the password and encrypt commands. to give the program more functionality and remove the "not yet implemented" line.
+In the next session, I will build and add the history, string validation, and the password and encrypt commands to give the program more functionality and remove the "not yet implemented" line.
+
+# 10-16-2026 2:43pm
+Session 4:
+Start Entry:
+Some thoughts I had since last session: The pipes are confirmed to be working, so this session is about the user-facing behavior. The spec describes the same “history or new string” flow for password, encrypt and decrypt, so I’m going to write one choose() function and reuse it, rather than duplicating the logic and risking any inconsistencies.
+
+For exiting the history, the spec requires a way out of the history menu to enter a new string. I’ll use 0 for that, because the valid choices start at 1 and can’t collide with it and for empty history I will skip the “use history?” question entirely. I will validate before storing, so bad input never reaches history. 
+For logging, for each command I log the command, then the input, then the result or error. For passwords I log only “Password set”, never the value, because passwords are never directly logged.
+For results into history, the encryptor replies RESULT OIWWC, and I strip the RESULT prefix so history holds just the text, which makes it usable as input for a later command.
+
+
+My plan for this session is to write choose() and show_history(), add the history command, then password, then encrypt, testing each by hand before moving on. I’m deliberately leaving decrypt for the next session so I can see whether encrypt and decrypt end up being nearly identical.
