@@ -106,3 +106,35 @@ For the shutdown order, I need to tell the encryptor to quit, log my own EXIT li
 EOFError from input() (Ctrl-D) will count as quit, so the program doesn’t crash with a traceback.
 
 My plan for this session is to write only the skeleton, with quit as the only working command and a placeholder for everything else. Success means running it, typing quit, and finding START, COMMAND and EXIT lines in the log file with both children gone.
+
+Coding session starts:
+The code I am doing for this session is the skeleton and a small functionality in driver.py which connects logger and encrypter into a single point, basically this is where the prohram is run, it is the entry point. As of right now, it starts the logger and encryptor as child processes, connects them with pipes, runs a menu loop where only quit works, then shuts everything down cleanly.
+
+- I used Popen with PIPE because this is the Python version of fork, pipe, dup2 and exec combined, and it’s the subprocess module the spec requires. 
+
+- in total I am using 3 pipes, one pipe for the logger, two for the encryptor. The logger only receives text, so stdin=PIPE is enough. The encryptor receives commands and sends replies, so it needs stdin=PIPE and stdout=PIPE. I didn’t open a pipe I wouldn’t read, because an unread pipe can fill up and block the child.
+
+- I think I want to use encoding="utf8" because pipes carry raw bytes by default. This makes them behave as text, so I can write strings and call readline() directly.
+
+- I built the script_path() from __file__ because the driver finds logger.py and encrypt.py next to itself, even if I launch it from another directory.
+
+- send() helper (write, flush, readline): each command gets exactly one reply line, so requests and replies stay paired. The flush is essential, because buffered data never reaches the child, and then the driver blocks forever waiting for a reply.
+
+- log() helper: every log message goes through one function with one flush, so I only have to get it right once.
+
+- Shutdown order serves a few purposes for example send QUIT to the encryptor, log EXIT while the logger is still alive, send QUIT to the logger, close both pipes, then wait() on both. Logging EXIT after the logger quit would write into a dead pipe.
+
+- I am closing pipes before wait(). Closing stdin guarantees the child sees EOF even if it missed QUIT. wait() collects the exit status so no zombie processes remain.
+
+- EOFError treated as quit and Ctrl-D makes input() raise an exception. Catching it gives a clean exit instead of a traceback.
+
+- Placeholder branch (“Not implemented yet”) lets me test the plumbing before adding features. If something breaks later, I know the pipes already worked.
+
+The main concepts I am using here are parent and child processes, separate memory, why pipes are one-way (so two-way talk needs two pipes), and how a missing flush can deadlock both sides.
+
+I noticed the driver never reads from the logger, so I didn’t create a stdout pipe for it. An unread pipe can fill up and block the child.
+
+I found 2 errors:
+The driver hung at exit the first time. I had sent QUIT to the logger but never closed the pipe or called wait(). Closing stdin guarantees the child sees EOF even if it missed QUIT, and wait() collects the child’s exit status so it doesn’t linger as a zombie process.
+
+My log lines were missing at first. I forgot the flush in log(), so the data was sitting in Python’s buffer and the logger never received it.
