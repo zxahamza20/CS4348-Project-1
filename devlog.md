@@ -86,7 +86,7 @@ I made the passkey live in a global variable because the process needs to rememb
 
 What this shows about pipes and processes is that the key exists only inside this process’s memory. The driver can never read it directly. It can only send a command and read the reply, which is why a clear line-based protocol matters.
 
-The only proble i encountered this session was that I was priinting without flushing so the program kept getting hanged.I made a replay helper function which replied and then flusherd to remedy this issue.
+The only problem I encountered this session was that I was printing without flushing so the program kept getting hanged.I made a replay helper function which replied and then flusherd to remedy this issue.
 
 Next session, I will build the driver skeleton, which is the first time all three processes will run together. I will will only implement the quit functionality for now because I more time to figure out how to tie all of this together in a single main entry point. 
 
@@ -138,3 +138,13 @@ I found 2 errors:
 The driver hung at exit the first time. I had sent QUIT to the logger but never closed the pipe or called wait(). Closing stdin guarantees the child sees EOF even if it missed QUIT, and wait() collects the child’s exit status so it doesn’t linger as a zombie process.
 
 My log lines were missing at first. I forgot the flush in log(), so the data was sitting in Python’s buffer and the logger never received it.
+
+# 10-16-2026 3:37am
+End entry:
+looking back on this session, the skeleton works just fine. I ran python3 driver.py t.log, typed quit, and the log contained START, COMMAND and EXIT lines with correct timestamps. The prompt returned immediately and ps showed no leftover python processes”. pressing quit immediately terminated everything and brought me back to the root directory. 
+
+Using Popen with PIPE is how I satisfy the spec’s use of the subprocess module. It does what fork, pipe, dup2 and exec would do in C: create a child process and connect its standard streams to pipes the parent holds. The helpers keep the request and reply pattern consistent, and the shutdown order avoids writing to a closed logger.
+
+I understand better now that a pipe is one-way, so a two-way conversation needs two pipes. Messages have to pair up one request to one reply. If the driver waits for a reply the child never sends, both sides wait forever. and potentially enter a deadlock. 
+
+In the next session, I will build and add the history, string validation, and the password and encrypt commands. to give the program more functionality and remove the "not yet implemented" line.
