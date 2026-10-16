@@ -89,3 +89,20 @@ What this shows about pipes and processes is that the key exists only inside thi
 The only proble i encountered this session was that I was priinting without flushing so the program kept getting hanged.I made a replay helper function which replied and then flusherd to remedy this issue.
 
 Next session, I will build the driver skeleton, which is the first time all three processes will run together. I will will only implement the quit functionality for now because I more time to figure out how to tie all of this together in a single main entry point. 
+
+# 10-16-2026 1:32am
+Session 3:
+Start Entry:
+Since last session I realized both child programs work on their own, so any bug I see from now on will be most likely in the connection between them. That’s why I’m splitting the driver across three sessions and building the plumbing first, before any menu features. If the processes can start, exchange a message and shut down cleanly, everything after that is just adding commands on top.
+
+The key design question is how many pipes each child needs. The logger only receives text. It never talks back, so it needs one pipe (the driver writes to the logger’s stdin). The encryption program receives commands and sends replies, so it needs two pipes, one in each direction. I’ll create exactly those with stdin=PIPE and stdout=PIPE and not open any pipe I don’t use. I’ll also pass encoding="utf8", so the pipes behave like text streams and I can use readline().
+
+I’ll launch the children with sys.executable instead of the string "python". That way the children always use the same interpreter as the driver, and it works whether the machine calls it python or python3. 
+
+I’ll build the child paths from __file__ so the driver finds logger.py and encrypt.py even if I run it from a different directory.
+I’ll write two helpers. send() writes one line to the encryptor, flushes, and reads exactly one line of reply. log() writes one line to the logger and flushes. Using helpers means every message follows the same pattern, and I only have to get the flush right once.
+
+For the shutdown order, I need to tell the encryptor to quit, log my own EXIT line while the logger is still alive, tell the logger to quit, close both pipes, then wait for both children. If I logged EXIT after quitting the logger, I’d be writing into a pipe nobody reads.
+EOFError from input() (Ctrl-D) will count as quit, so the program doesn’t crash with a traceback.
+
+My plan for this session is to write only the skeleton, with quit as the only working command and a placeholder for everything else. Success means running it, typing quit, and finding START, COMMAND and EXIT lines in the log file with both children gone.
