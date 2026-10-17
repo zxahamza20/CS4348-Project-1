@@ -211,3 +211,12 @@ I basically made one shared choose() which keeps validation and the history menu
 I think I understand better now that the driver is a controller. It owns user-facing state like the history, the encryptor owns only the passkey, and the logger owns only the file. Each process has one job, and the pipes carry the messages between them.
 
 For the next session: I only have one more thing to add, decrypt. The encrypt branch looks like it can be shared with decrypt almost unchanged. After that, final testing, and the reademe, which will be the end. 
+
+# 10-16-2026
+Session 5:
+Start entry:
+Since the last session, I realized that since encrypt works, and looking at the code again, decrypt would be identical except for the command word. Writing a second copy would double the places a bug could hide, so I’ll merge them into one branch driven by the command name. I’ll also add proper handling for unknown commands, which currently print a placeholder.
+
+The things I’ll check against the spec are log format, action as first word, no passwords in the log or history, history exit option, letters-only checks, case insensitivity, and the logging of start and exit.
+
+My plan for this session is to merge encrypt and decrypt into one branch, and log unknown commands. ALong with that, run the full test checklist, including a grep of the log for the test password and fix anything that fails along with writing the README.
