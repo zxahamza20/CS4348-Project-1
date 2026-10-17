@@ -23,7 +23,12 @@ def show_history():
 def choose(label, store):
   use_hist = False
   if history:
-    use_hist = input("Use a string from history? (y/n): ").strip().lower() == "y"
+    while True:
+      answer = input("Use a string from history? (y/n): ").strip().lower()
+      if answer in ("y", "n"):
+        use_hist = answer == "y"
+        break
+      print("Error: enter y or n.")
 
   while True:
     if use_hist:
@@ -82,14 +87,14 @@ def main():
       resp = send(enc, "PASS " + s)
       print(resp)
       log(logger, "RESULT", "Password set" if resp.startswith("RESULT") else resp)
-    elif cmd == "encrypt":
-      log(logger, "COMMAND", "encrypt")
-      s = choose("string to encrypt", True)
+    elif cmd in ("encrypt", "decrypt"):
+      log(logger, "COMMAND", cmd)
+      s = choose(f"string to {cmd}", True)
       if s is None:
         log(logger, "ERROR", "Invalid input string")
         continue
       log(logger, "INPUT", s)
-      resp = send(enc, "ENCRYPT " + s)
+      resp = send(enc, cmd.upper() + " " + s)
       print(resp)
       if resp.startswith("RESULT "):
         history.append(resp[7:])
@@ -97,7 +102,8 @@ def main():
       else:
         log(logger, "ERROR", resp)
     else:
-      print("Not implemented yet.")
+      print("Unknown command.")
+      log(logger, "ERROR", "Unknown command")
 
   enc.stdin.write("QUIT\n")
   enc.stdin.flush()

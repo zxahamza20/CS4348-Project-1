@@ -172,7 +172,7 @@ The code I am doing for this session is the history, choose(),password, and encr
 
 - Option 0 leaves the history menu. The spec requires a way out of the history to enter a new string. Valid choices start at 1, so 0 will not collide with a real one.
 
-_ I decided skipping the “use history?” question when it’s empty because it would be pointless and confusing.
+- I decided skipping the “use history?” question when it’s empty because it would be pointless and confusing.
 
 - I need both isascii() plus isalpha()\ because isalpha() alone accepts letters like “é”, which would break the backend’s ord(ch) - 65 math. This is why I validate more strictly than the obvious check.
 
@@ -212,7 +212,7 @@ I think I understand better now that the driver is a controller. It owns user-fa
 
 For the next session: I only have one more thing to add, decrypt. The encrypt branch looks like it can be shared with decrypt almost unchanged. After that, final testing, and the reademe, which will be the end. 
 
-# 10-16-2026
+# 10-16-2026 11:52pm
 Session 5:
 Start entry:
 Since the last session, I realized that since encrypt works, and looking at the code again, decrypt would be identical except for the command word. Writing a second copy would double the places a bug could hide, so I’ll merge them into one branch driven by the command name. I’ll also add proper handling for unknown commands, which currently print a placeholder.
@@ -220,3 +220,22 @@ Since the last session, I realized that since encrypt works, and looking at the 
 The things I’ll check against the spec are log format, action as first word, no passwords in the log or history, history exit option, letters-only checks, case insensitivity, and the logging of start and exit.
 
 My plan for this session is to merge encrypt and decrypt into one branch, and log unknown commands. ALong with that, run the full test checklist, including a grep of the log for the test password and fix anything that fails along with writing the README.
+
+Coding session starts:
+- Merging encrypt and decrypt: the two branches differed only in the command word. The merged branch uses cmd.upper() to build the protocol line. That means one copy of the logic, so there’s one place for a bug to hide, and a fix to one command is automatically a fix to the other.
+
+- cmd in ("encrypt", "decrypt"): the same branch serves both, and the label passed to choose() is built from the command name, so the prompt reads correctly for each.
+
+- Unknown commands print a message and log an ERROR: the spec asks for error checking, and logging the bad command keeps the log a faithful record of what happened.
+
+- No new pipe or process logic: by this point the plumbing has been tested for two sessions, so any failure in testing is most likely in the commands or the validation, not the connection.
+
+- Test with a unique password (like SECRETKEY) and then grep the log: this checks the spec’s “passwords are never logged” rule automatically. If I used HELLO, the grep would also match legitimate lines such as encrypt inputs.
+
+- Reading out.log directly: I don’t trust the on-screen output alone, since the log’s format and contents are graded behaviors.
+
+I merged encrypt and decrypt with cmd.upper() for the protocol word, and decrypt round-trips back to the original, so the shared path is correct.
+
+A test showed the log contained the password because I’d typed the same word as an encrypt input. I realized the grep check needs a password that isn’t reused anywhere else.
+
+I noticed that when the question "use string from history?" is popped up and the user types an answer other than y or n, the the programproceeds to ask for a new to string to pset password/encrypt/decrypt which is a broken feature, so added a pass check and it now thros an error and asks user to press y or n to proceed. 
